@@ -1,6 +1,7 @@
 package com.app.uber.googleimage;
 
-import views.activities.GoogleImageSearch;
+import views.activities.GoogleImageSearchIonActivity;
+import views.activities.GoogleImageSearchVolleyActivity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.app.Activity;
@@ -15,8 +16,8 @@ public class SplashScreenActivity extends Activity {
 		public void run() {
 			 Intent i;
 			
-			 i = new Intent(SplashScreenActivity.this, GoogleImageSearch.class);		 
-			// i = new Intent(SplashScreenActivity.this, MainActivity.class);
+			 //i = new Intent(SplashScreenActivity.this, GoogleImageSearchIonActivity.class);
+			 i = new Intent(SplashScreenActivity.this, GoogleImageSearchVolleyActivity.class);		 
 			 startActivity(i);
 			 SplashScreenActivity.this.finish();
 	     }

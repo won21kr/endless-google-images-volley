@@ -6,6 +6,7 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.Volley;
 
 import android.app.Application;
+import android.content.Context;
 import android.text.TextUtils;
 
 public class NetworkController extends Application {
@@ -18,12 +19,21 @@ public class NetworkController extends Application {
     /**
      * Global request queue for Volley
      */
-    private RequestQueue mRequestQueue;
+    private static RequestQueue mRequestQueue;
 
     /**
      * A singleton instance of the application class for easy access in other places
      */
     private static NetworkController sInstance;
+    
+    private NetworkController(){
+    	
+    }
+    
+    static void init(Context context) {
+        mRequestQueue = Volley.newRequestQueue(context);
+
+    }
 
     @Override
     public void onCreate() {
@@ -40,17 +50,12 @@ public class NetworkController extends Application {
         return sInstance;
     }
 
-    /**
-     * @return The Volley Request queue, the queue will be created if it is null
-     */
-    public RequestQueue getRequestQueue() {
-        // lazy initialize the request queue, the queue instance will be
-        // created when it is accessed for the first time
-        if (mRequestQueue == null) {
-            mRequestQueue = Volley.newRequestQueue(getApplicationContext());
+    public static RequestQueue getRequestQueue() {
+        if (mRequestQueue != null) {
+            return mRequestQueue;
+        } else {
+            throw new IllegalStateException("RequestQueue not initialized");
         }
-
-        return mRequestQueue;
     }
 
     /**

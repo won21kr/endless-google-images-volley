@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * Created by koush on 6/4/13.
  */
-public class GoogleImageSearch extends Activity {
+public class GoogleImageSearchIonActivity extends Activity {
     private MyAdapter mAdapter;
 
     // Adapter to populate and imageview from an url contained in the array adapter
@@ -62,7 +62,7 @@ public class GoogleImageSearch extends Activity {
             return;
 
         // query googles image search api
-        loading = Ion.with(GoogleImageSearch.this)
+        loading = Ion.with(GoogleImageSearchIonActivity.this)
         .load(String.format("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium", Uri.encode(searchText.getText().toString()), mAdapter.getCount()))
         // get the results as json
         .asJsonObject()
