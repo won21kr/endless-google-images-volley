@@ -56,10 +56,7 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            // see if we need to load more to get 40, otherwise populate the adapter
-            if (position > getCount() - 4)
-                loadMore();
-
+        	
             if (convertView == null)
                 convertView = getLayoutInflater().inflate(R.layout.google_image, null);
 
@@ -80,17 +77,17 @@ public class GoogleImageSearchVolleyActivity extends Activity {
     }
 
     
-    private void loadMore() {        
+    private void loadMore() {   
+    	Log.i("LOAD", "LOAD CALLED");
         JsonObjectRequest myReq = new JsonObjectRequest(Method.GET,
-        		String.format("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&" 
-        				+ "q=%s&start=%d&imgsz=medium", Uri.encode(searchText.getText().toString()), mAdapter.getCount()),
+        		String.format("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium", Uri.encode(searchText.getText().toString()), mAdapter.getCount()),
                         null,
                         createMyReqSuccessListener(),
                         createMyReqErrorListener());
         Log.i("REQUEST", myReq.toString());
 
-        mQueue.add(myReq);
-        
+       //mQueue.add(myReq);
+        NetworkController.getInstance().addToRequestQueue(myReq);
     	
     }
 
@@ -102,8 +99,8 @@ public class GoogleImageSearchVolleyActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.google_image_search);
         
-        mQueue = Volley.newRequestQueue(this);
-
+        //mQueue = Volley.newRequestQueue(this);
+        
         final Button search = (Button) findViewById(R.id.search);
         searchText = (EditText) findViewById(R.id.search_text);
         
@@ -183,7 +180,7 @@ public class GoogleImageSearchVolleyActivity extends Activity {
      */
     public class EndlessScrollListener implements OnScrollListener {
         // how many entries earlier to start loading next page
-        private int visibleThreshold = 9;
+        private int visibleThreshold = 4;
         private int currentPage = 0;
         private int previousTotal = 0;
         private boolean loading = true;
