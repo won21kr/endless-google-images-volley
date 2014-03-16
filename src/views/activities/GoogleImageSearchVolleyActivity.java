@@ -1,17 +1,21 @@
 package views.activities;
 
+import adapters.ImageAdapter;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import android.widget.AbsListView.OnScrollListener;
 
+import com.activeandroid.ActiveAndroid;
 import com.android.volley.Request.Method;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -36,49 +40,22 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import models.GoogleImage;
+import models.Image;
+import models.Query;
 
 /**
  * Created by koush on 6/4/13.
  */
 public class GoogleImageSearchVolleyActivity extends Activity {
-    private MyAdapter mAdapter;
+    public ImageAdapter mAdapter;
 	EditText searchText;
-	private RequestQueue mQueue;
 	private boolean mInError = false;
-
-
-    // Adapter to populate and imageview from an url contained in the array adapter
-    private class MyAdapter extends ArrayAdapter<String> {
-        public MyAdapter(Context context) {
-            super(context, 0);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-        	
-            if (convertView == null)
-                convertView = getLayoutInflater().inflate(R.layout.google_image, null);
-
-            // find the image view
-            final ImageView iv = (ImageView) convertView.findViewById(R.id.image);
-
-            Picasso.with(getApplicationContext())
-            .load(getItem(position))
-            .centerCrop()
-            .resize(256,  256)
-            .placeholder(R.drawable.placeholder)
-            .error(R.drawable.error)
-            .into(iv);
-
-
-            return convertView;
-        }
-    }
-
+	private Button search;
+	private Button historyButton;
+	private GridView mGridView;
     
     private void loadMore() {   
-    	Log.i("LOAD", "LOAD CALLED");
+    	Log.i("LOAD", "LOAD CALLED: Size: " + mAdapter.getCount());
         JsonObjectRequest myReq = new JsonObjectRequest(Method.GET,
         		String.format("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium", Uri.encode(searchText.getText().toString()), mAdapter.getCount()),
                         null,
@@ -100,31 +77,50 @@ public class GoogleImageSearchVolleyActivity extends Activity {
         setContentView(R.layout.google_image_search);
         
         //mQueue = Volley.newRequestQueue(this);
-        
-        final Button search = (Button) findViewById(R.id.search);
+        search = (Button) findViewById(R.id.search);
+        historyButton = (Button) findViewById(R.id.history);
         searchText = (EditText) findViewById(R.id.search_text);
         
-        search.setOnClickListener(new View.OnClickListener() {
+        search.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 search();
+                //Store query in the model
+                Query query = new Query(searchText.getText().toString());
+                query.save();
+                
             }
         });
+        
+        historyButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
+				startActivity(i);
+			}
+		});
 
-        GridView view = (GridView) findViewById(R.id.results);
-        view.setNumColumns(3);
-        mAdapter = new MyAdapter(this);
-        view.setAdapter(mAdapter);
-        view.setOnScrollListener(new EndlessScrollListener());
+       //grid view
+        mGridView = (GridView) findViewById(R.id.results);
+        mGridView.setNumColumns(3);
+        
+        //set reference to adapter
+        mAdapter = new ImageAdapter(this);
+        mGridView.setAdapter(mAdapter);
 
-        //search();
     }
 
     private void search() {
+    	
+    	//Clear out previous search results
         mAdapter.clear();
+        
+        //load images
         loadMore();
-        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(searchText.getWindowToken(), 0);
+
+       //searchText.setText("");
+       // InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+       //imm.hideSoftInputFromWindow(searchText.getWindowToken(), 0);
     }
  
     
@@ -134,16 +130,24 @@ public class GoogleImageSearchVolleyActivity extends Activity {
         	
             @Override
             public void onResponse(JSONObject response) {
+            	
                 try {
+                	
                     JSONObject feed = response.getJSONObject("responseData");
+                    JSONObject cursor = feed.getJSONObject("cursor");
                     JSONArray entries = feed.getJSONArray("results");
+                    int estimatedTotal = cursor.getInt("estimatedResultCount");
+                    mGridView.setOnScrollListener(new EndlessScrollListener(estimatedTotal));
+                    
                     JSONObject entry;
                     for (int i = 0; i < entries.length(); i++) {
                         entry = entries.getJSONObject(i);
-                        
                         String url = null;
                         url = entry.getString("url");
-                        
+                       /* Image image = new Image(url);
+                        image.query = query;    
+                        image.save();*/
+                       
                         //mEntries.add(new GoogleImage(url));
                         mAdapter.add(url);
                     }
@@ -172,38 +176,34 @@ public class GoogleImageSearchVolleyActivity extends Activity {
       
     }
     
-    /**
-     * Detects when user is close to the end of the current page and starts loading the next page
-     * so the user will not have to wait (that much) for the next entries.
-     * 
-     * @author Ognyan Bankov (ognyan.bankov@bulpros.com)
-     */
+    
     public class EndlessScrollListener implements OnScrollListener {
         // how many entries earlier to start loading next page
         private int visibleThreshold = 4;
         private int currentPage = 0;
         private int previousTotal = 0;
-        private boolean loading = true;
-
+        private boolean loading = false;
+        private int totalItems = 0;
         public EndlessScrollListener() {
         }
-        public EndlessScrollListener(int visibleThreshold) {
-            this.visibleThreshold = visibleThreshold;
+        
+        public EndlessScrollListener(int totalItems) {
+            this.totalItems = totalItems;
         }
-
+        
         @Override
         public void onScroll(AbsListView view, int firstVisibleItem,
                 int visibleItemCount, int totalItemCount) {
             if (loading) {
                 if (totalItemCount > previousTotal) {
+                	Log.i("LOADING", "NOT LOADING");
                     loading = false;
                     previousTotal = totalItemCount;
                     currentPage++;
                 }
             }
             if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
-                // I load the next page of gigs using a background task,
-                // but you can call any function here.
+            	Log.i("LOADING MORE", "LOADING MORE");
                 loadMore();
                 loading = true;
             }
