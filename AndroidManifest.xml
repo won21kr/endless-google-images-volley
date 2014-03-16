@@ -29,6 +29,10 @@
         
         <activity android:name="views.activities.GoogleImageSearchIonActivity"></activity>
         <activity android:name="views.activities.GoogleImageSearchVolleyActivity"></activity>
+       <activity android:name="views.activities.QueryHistoryActivity"></activity>
+        
+        <meta-data android:name="AA_DB_NAME" android:value="GoogleImage.db" />
+        <meta-data android:name="AA_DB_VERSION" android:value="1" />
     </application>
 
 </manifest>

@@ -9,7 +9,7 @@ import android.app.Application;
 import android.content.Context;
 import android.text.TextUtils;
 
-public class NetworkController extends Application {
+public class NetworkController extends com.activeandroid.app.Application {
 
     /**
      * Log or request TAG
