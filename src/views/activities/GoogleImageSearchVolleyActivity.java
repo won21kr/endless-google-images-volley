@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -62,17 +63,6 @@ public class GoogleImageSearchVolleyActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_search_volley);
-        
-        //mQueue = Volley.newRequestQueue(this);
-        historyButton = (Button) findViewById(R.id.history);
-        
-        historyButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
-				startActivity(i);
-			}
-		});
 
        //grid view
         mGridView = (GridView) findViewById(R.id.results);
@@ -230,6 +220,8 @@ public class GoogleImageSearchVolleyActivity extends Activity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.image_search, menu);
         
+        
+        
         SearchView searchView = (SearchView) menu.findItem( R.id.action_search ).getActionView();
         searchView.setSubmitButtonEnabled(true);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -248,6 +240,24 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		});
         return true;
     }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+      switch (item.getItemId()) {
+      case R.id.action_search_history:
+        showHistory();
+        break;
+      default:
+        break;
+      }
+      return true;  
+    }
+
+
+	private void showHistory() {
+		Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
+		startActivity(i);		
+	}
 
 	protected void storeQuery(String queryString) {
 		Query query = new Query(queryString);
