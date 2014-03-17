@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -107,7 +108,16 @@ public class GoogleImageSearchVolleyActivity extends Activity {
         //set reference to adapter
         mAdapter = new ImageAdapter(this);
         mGridView.setAdapter(mAdapter);
-
+        
+        Bundle extras = null;
+        if (getIntent().getExtras() != null){
+        	extras = getIntent().getExtras();
+        	String queryString = extras.getString("query");
+        	Log.i("INTENT QUERY", "query string: " + queryString);
+        	searchText.setText(queryString);
+        	search();
+        }
+    
     }
 
     private void search() {
@@ -182,7 +192,7 @@ public class GoogleImageSearchVolleyActivity extends Activity {
         private int visibleThreshold = 4;
         private int currentPage = 0;
         private int previousTotal = 0;
-        private boolean loading = false;
+        private boolean loading = true;
         private int totalItems = 0;
         public EndlessScrollListener() {
         }
@@ -219,6 +229,13 @@ public class GoogleImageSearchVolleyActivity extends Activity {
             return currentPage;
         }
       
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.image_search, menu);
+        return true;
     }
     
 }
