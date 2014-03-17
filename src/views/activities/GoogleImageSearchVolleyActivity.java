@@ -49,25 +49,11 @@ import models.Query;
  */
 public class GoogleImageSearchVolleyActivity extends Activity {
     public ImageAdapter mAdapter;
-	EditText searchText;
 	private boolean mInError = false;
-	private Button search;
 	private Button historyButton;
 	private GridView mGridView;
+	private String mCurrentQuery;
     
-    private void loadMore() {   
-    	Log.i("LOAD", "LOAD CALLED: Size: " + mAdapter.getCount());
-        JsonObjectRequest myReq = new JsonObjectRequest(Method.GET,
-        		String.format("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium", Uri.encode(searchText.getText().toString()), mAdapter.getCount()),
-                        null,
-                        createMyReqSuccessListener(),
-                        createMyReqErrorListener());
-        Log.i("REQUEST", myReq.toString());
-
-       //mQueue.add(myReq);
-        NetworkController.getInstance().addToRequestQueue(myReq);
-    	
-    }
 
     /**
      * Called when the activity is first created.
@@ -75,23 +61,10 @@ public class GoogleImageSearchVolleyActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.google_image_search);
+        setContentView(R.layout.image_search_volley);
         
         //mQueue = Volley.newRequestQueue(this);
-        search = (Button) findViewById(R.id.search);
         historyButton = (Button) findViewById(R.id.history);
-        searchText = (EditText) findViewById(R.id.search_text);
-        
-        search.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                search();
-                //Store query in the model
-                Query query = new Query(searchText.getText().toString());
-                query.save();
-                
-            }
-        });
         
         historyButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -109,19 +82,26 @@ public class GoogleImageSearchVolleyActivity extends Activity {
         mAdapter = new ImageAdapter(this);
         mGridView.setAdapter(mAdapter);
         
-        Bundle extras = null;
-        if (getIntent().getExtras() != null){
-        	extras = getIntent().getExtras();
-        	String queryString = extras.getString("query");
-        	Log.i("INTENT QUERY", "query string: " + queryString);
-        	searchText.setText(queryString);
-        	search();
-        }
-    
+        fromHistoryActivity();
     }
 
-    private void search() {
-    	
+	private boolean fromHistoryActivity() {
+		boolean ret = false;
+		Bundle extras = null;
+		if (getIntent().getExtras() != null) {
+			ret = true;
+			extras = getIntent().getExtras();
+			String queryString = extras.getString("query");
+			Log.i("INTENT QUERY", "query string: " + queryString);
+			search(queryString);
+		}
+		return ret;
+	}
+
+	private void search(String query) {
+    	//set current search query
+		mCurrentQuery = query;
+		
     	//Clear out previous search results
         mAdapter.clear();
         
@@ -131,6 +111,20 @@ public class GoogleImageSearchVolleyActivity extends Activity {
        //searchText.setText("");
        // InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
        //imm.hideSoftInputFromWindow(searchText.getWindowToken(), 0);
+    }
+	
+	private void loadMore() {   
+    	Log.i("LOAD", "LOAD CALLED: Size: " + mAdapter.getCount());
+        JsonObjectRequest myReq = new JsonObjectRequest(Method.GET,
+        		String.format("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium", Uri.encode(mCurrentQuery), mAdapter.getCount()),
+                        null,
+                        createMyReqSuccessListener(),
+                        createMyReqErrorListener());
+        Log.i("REQUEST", myReq.toString());
+
+       //mQueue.add(myReq);
+        NetworkController.getInstance().addToRequestQueue(myReq);
+    	
     }
  
     
@@ -235,7 +229,29 @@ public class GoogleImageSearchVolleyActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.image_search, menu);
+        
+        SearchView searchView = (SearchView) menu.findItem( R.id.action_search ).getActionView();
+        searchView.setSubmitButtonEnabled(true);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+			
+			@Override
+			public boolean onQueryTextSubmit(String queryString) {				
+				storeQuery(queryString);
+				search(queryString);
+				return false;
+			}
+			
+			@Override
+			public boolean onQueryTextChange(String currentText) {
+				return false;
+			}
+		});
         return true;
     }
+
+	protected void storeQuery(String queryString) {
+		Query query = new Query(queryString);
+        query.save();		
+	}
     
 }
