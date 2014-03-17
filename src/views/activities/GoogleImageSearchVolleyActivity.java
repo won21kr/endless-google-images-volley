@@ -12,7 +12,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import android.widget.AbsListView.OnScrollListener;
@@ -49,31 +51,31 @@ import models.Query;
  * Created by koush on 6/4/13.
  */
 public class GoogleImageSearchVolleyActivity extends Activity {
-    public ImageAdapter mAdapter;
+	public ImageAdapter mAdapter;
 	private boolean mInError = false;
 	private Button historyButton;
 	private GridView mGridView;
 	private String mCurrentQuery;
-    
 
-    /**
-     * Called when the activity is first created.
-     */
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.image_search_volley);
+	/**
+	 * Called when the activity is first created.
+	 */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	    requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);  
+		setContentView(R.layout.image_search_volley);
 
-       //grid view
-        mGridView = (GridView) findViewById(R.id.results);
-        mGridView.setNumColumns(3);
-        
-        //set reference to adapter
-        mAdapter = new ImageAdapter(this);
-        mGridView.setAdapter(mAdapter);
-        
-        fromHistoryActivity();
-    }
+		// grid view
+		mGridView = (GridView) findViewById(R.id.results);
+		mGridView.setNumColumns(3);
+
+		// set reference to adapter
+		mAdapter = new ImageAdapter(this);
+		mGridView.setAdapter(mAdapter);
+
+		fromHistoryActivity();
+	}
 
 	private boolean fromHistoryActivity() {
 		boolean ret = false;
@@ -84,184 +86,175 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 			String queryString = extras.getString("query");
 			Log.i("INTENT QUERY", "query string: " + queryString);
 			search(queryString);
+			setTitle("Searching - " + queryString);
 		}
 		return ret;
 	}
 
 	private void search(String query) {
-    	//set current search query
+		// set current search query
 		mCurrentQuery = query;
-		
-    	//Clear out previous search results
-        mAdapter.clear();
-        
-        //load images
-        loadMore();
 
-       //searchText.setText("");
-       // InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-       //imm.hideSoftInputFromWindow(searchText.getWindowToken(), 0);
-    }
+		// Clear out previous search results
+		mAdapter.clear();
+
+		// load images
+		loadMore();
+	}
 	
-	private void loadMore() {   
-    	Log.i("LOAD", "LOAD CALLED: Size: " + mAdapter.getCount());
-        JsonObjectRequest myReq = new JsonObjectRequest(Method.GET,
-        		String.format("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium", Uri.encode(mCurrentQuery), mAdapter.getCount()),
-                        null,
-                        createMyReqSuccessListener(),
-                        createMyReqErrorListener());
-        Log.i("REQUEST", myReq.toString());
+	private void loadMore() {
+		setProgressBarIndeterminateVisibility(true);
+		Log.i("LOAD", "LOAD CALLED: Size: " + mAdapter.getCount());
+		JsonObjectRequest myReq = new JsonObjectRequest(
+				Method.GET,
+				String.format(
+						"https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium",
+						Uri.encode(mCurrentQuery), mAdapter.getCount()), null,
+				responseSuccessListener(), responseErrorListener());
+		Log.i("REQUEST", myReq.toString());
 
-       //mQueue.add(myReq);
-        NetworkController.getInstance().addToRequestQueue(myReq);
-    	
-    }
- 
-    
-    private Response.Listener<JSONObject> createMyReqSuccessListener() {
-    	
-        return new Response.Listener<JSONObject>() {
-        	
-            @Override
-            public void onResponse(JSONObject response) {
-            	
-                try {
-                	
-                    JSONObject feed = response.getJSONObject("responseData");
-                    JSONObject cursor = feed.getJSONObject("cursor");
-                    JSONArray entries = feed.getJSONArray("results");
-                    int estimatedTotal = cursor.getInt("estimatedResultCount");
-                    mGridView.setOnScrollListener(new EndlessScrollListener(estimatedTotal));
-                    
-                    JSONObject entry;
-                    for (int i = 0; i < entries.length(); i++) {
-                        entry = entries.getJSONObject(i);
-                        String url = null;
-                        url = entry.getString("url");
-                       /* Image image = new Image(url);
-                        image.query = query;    
-                        image.save();*/
-                       
-                        //mEntries.add(new GoogleImage(url));
-                        mAdapter.add(url);
-                    }
-                    mAdapter.notifyDataSetChanged();
-                } catch (JSONException e) {
-                    showErrorDialog(e);
-                }
-            }
-        };
-        
-    }
+		// mQueue.add(myReq);
+		NetworkController.getInstance().addToRequestQueue(myReq);
 
+	}
 
-    private Response.ErrorListener createMyReqErrorListener() {
-        return new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                showErrorDialog(error);
-            }
-        };
-    }
-    
-    private void showErrorDialog(Exception e) {
-        mInError  = true;
-        e.printStackTrace();
-      
-    }
-    
-    
-    public class EndlessScrollListener implements OnScrollListener {
-        // how many entries earlier to start loading next page
-        private int visibleThreshold = 4;
-        private int currentPage = 0;
-        private int previousTotal = 0;
-        private boolean loading = true;
-        private int totalItems = 0;
-        public EndlessScrollListener() {
-        }
-        
-        public EndlessScrollListener(int totalItems) {
-            this.totalItems = totalItems;
-        }
-        
-        @Override
-        public void onScroll(AbsListView view, int firstVisibleItem,
-                int visibleItemCount, int totalItemCount) {
-            if (loading) {
-                if (totalItemCount > previousTotal) {
-                	Log.i("LOADING", "NOT LOADING");
-                    loading = false;
-                    previousTotal = totalItemCount;
-                    currentPage++;
-                }
-            }
-            if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
-            	Log.i("LOADING MORE", "LOADING MORE");
-                loadMore();
-                loading = true;
-            }
-        }
+	private void showHistory() {
+		Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
+		startActivity(i);
+	}
 
-        @Override
-        public void onScrollStateChanged(AbsListView view, int scrollState) {
-            
-        }
-        
-        
-        public int getCurrentPage() {
-            return currentPage;
-        }
-      
-    }
-    
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.image_search, menu);
-        
-        
-        
-        SearchView searchView = (SearchView) menu.findItem( R.id.action_search ).getActionView();
-        searchView.setSubmitButtonEnabled(true);
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-			
+	protected void storeQuery(String queryString) {
+		Query query = new Query(queryString);
+		query.save();
+	}
+	
+	private Response.Listener<JSONObject> responseSuccessListener() {
+
+		return new Response.Listener<JSONObject>() {
+
 			@Override
-			public boolean onQueryTextSubmit(String queryString) {				
+			public void onResponse(JSONObject response) {
+				processResponse(response);
+				setProgressBarIndeterminateVisibility(false);
+			}
+		};
+
+	}
+
+	private Response.ErrorListener responseErrorListener() {
+		return new Response.ErrorListener() {
+			@Override
+			public void onErrorResponse(VolleyError error) {
+				showErrorDialog(error);
+			}
+		};
+	}
+
+	private void showErrorDialog(Exception e) {
+		mInError = true;
+		e.printStackTrace();
+
+	}
+
+	
+	protected void processResponse(JSONObject response) {
+		try {
+			JSONObject feed = response.getJSONObject("responseData");
+			JSONArray entries = feed.getJSONArray("results");
+			mGridView.setOnScrollListener(new EndlessScrollListener());
+
+			for (int i = 0; i < entries.length(); i++) {
+				JSONObject entry = entries.getJSONObject(i);
+				String url = entry.getString("url");
+				
+				mAdapter.add(url);
+			}
+			mAdapter.notifyDataSetChanged();
+		} catch (JSONException e) {
+			showErrorDialog(e);
+		}
+	}
+	
+
+	public class EndlessScrollListener implements OnScrollListener {
+		// how many entries earlier to start loading next page
+		private int visibleThreshold = 4;
+		private int currentPage = 0;
+		private int previousTotal = 0;
+		private boolean loading = true;
+
+		public EndlessScrollListener() {
+			
+		}
+		
+		@Override
+		public void onScrollStateChanged(AbsListView view, int scrollState) {
+			
+		}
+
+		@Override
+		public void onScroll(AbsListView view, int firstVisibleItem,
+				int visibleItemCount, int totalItemCount) {
+			if (loading) {
+				if (totalItemCount > previousTotal) {
+					Log.i("LOADING", "NOT LOADING");
+					loading = false;
+					previousTotal = totalItemCount;
+					currentPage++;
+				}
+			}
+			//if we are not loading and the (total - visible in view) <=  (current top item position + the threshold value)
+			if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
+				Log.i("LOADING MORE", "LOADING MORE");
+				loadMore();
+				loading = true;
+			}
+		}
+
+		public int getCurrentPage() {
+			return currentPage;
+		}
+
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.image_search, menu);
+
+		final MenuItem searchItem = menu.findItem(R.id.action_search);
+		final SearchView searchView = (SearchView) menu.findItem(R.id.action_search)
+				.getActionView();
+		searchView.setSubmitButtonEnabled(true);
+		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+			@Override
+			public boolean onQueryTextSubmit(String queryString) {
 				storeQuery(queryString);
 				search(queryString);
-				return false;
+				searchItem.collapseActionView();
+				setTitle("Searching - " + queryString);
+				return true;
 			}
-			
+
 			@Override
 			public boolean onQueryTextChange(String currentText) {
 				return false;
 			}
 		});
-        return true;
-    }
-    
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-      switch (item.getItemId()) {
-      case R.id.action_search_history:
-        showHistory();
-        break;
-      default:
-        break;
-      }
-      return true;  
-    }
-
-
-	private void showHistory() {
-		Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
-		startActivity(i);		
+		return true;
 	}
 
-	protected void storeQuery(String queryString) {
-		Query query = new Query(queryString);
-        query.save();		
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.action_search_history:
+			showHistory();
+			break;
+		default:
+			break;
+		}
+		return true;
 	}
-    
+
 }
