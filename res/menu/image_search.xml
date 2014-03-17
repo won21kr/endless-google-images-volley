@@ -8,5 +8,11 @@
         android:showAsAction="ifRoom"
         android:title="search"
         android:actionViewClass="android.widget.SearchView"/>
-
+    
+	 <item
+        android:id="@+id/action_search_history"
+        android:icon="@android:drawable/ic_menu_recent_history"
+        android:showAsAction="ifRoom"
+        android:title="history" />
+	 
 </menu>
