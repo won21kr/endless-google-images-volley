@@ -1,11 +1,18 @@
 package views.activities;
 
 import java.util.List;
+
 import models.Query;
+
 import com.app.uber.googleimage.R;
+
 import adapters.QueryAdapter;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
 public class QueryHistoryActivity extends Activity {
@@ -22,7 +29,25 @@ public class QueryHistoryActivity extends Activity {
 		mLVQueries.setAdapter(mQueryAdapter);
 		
 		fetchQueryList();
-		//setupQueryItemListenter();
+		setupQueryItemListenter();
+	}
+
+
+	private void setupQueryItemListenter() {
+		mLVQueries.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View itemView, int position,
+					long id) {
+				Intent i = new Intent(getApplicationContext(), GoogleImageSearchVolleyActivity.class);
+				Bundle b = new Bundle();
+				b.putString("query", Query.recentItems().get(position).getQuery());
+				i.putExtras(b);
+				startActivity(i);
+				
+			}
+		});
+		
 	}
 
 
