@@ -10,6 +10,7 @@ import adapters.QueryAdapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -23,6 +24,8 @@ public class QueryHistoryActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.query_history_container);
+		
+		setTitle("Search History");
 		
 		mLVQueries = (ListView) findViewById(R.id.lv_query_list_view);
 		mQueryAdapter = new QueryAdapter(getApplicationContext());
@@ -58,5 +61,14 @@ public class QueryHistoryActivity extends Activity {
 		}
 		
 	}
-
+	
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        int theId = item.getItemId();
+        if (theId == android.R.id.home) {
+            finish();
+        }
+        return true;
+    }
+	
 }
