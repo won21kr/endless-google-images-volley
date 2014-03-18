@@ -73,6 +73,7 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		// set reference to adapter
 		mAdapter = new ImageAdapter(this);
 		mGridView.setAdapter(mAdapter);
+		mGridView.setOnScrollListener(new EndlessScrollListener());
 
 		fromHistoryActivity();
 	}
@@ -117,17 +118,20 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		NetworkController.getInstance().addToRequestQueue(myReq);
 
 	}
+	
+	protected void processResponse(JSONObject response) {	
+		ArrayList<Image> imageList = Image.fromJSON(response);
+		for (Image image : imageList){
+			mAdapter.add(image.url);
+		}
+		mAdapter.notifyDataSetChanged();
+}
 
 	private void showHistory() {
 		Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
 		startActivity(i);
 	}
 
-	protected void storeQuery(String queryString) {
-		Query query = new Query(queryString);
-		query.save();
-	}
-	
 	private Response.Listener<JSONObject> responseSuccessListener() {
 
 		return new Response.Listener<JSONObject>() {
@@ -138,8 +142,8 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 				setProgressBarIndeterminateVisibility(false);
 			}
 		};
-
 	}
+	
 
 	private Response.ErrorListener responseErrorListener() {
 		return new Response.ErrorListener() {
@@ -153,28 +157,57 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	private void showErrorDialog(Exception e) {
 		mInError = true;
 		e.printStackTrace();
-
 	}
 
-	
-	protected void processResponse(JSONObject response) {
-		try {
-			JSONObject feed = response.getJSONObject("responseData");
-			JSONArray entries = feed.getJSONArray("results");
-			mGridView.setOnScrollListener(new EndlessScrollListener());
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.image_search, menu);
 
-			for (int i = 0; i < entries.length(); i++) {
-				JSONObject entry = entries.getJSONObject(i);
-				String url = entry.getString("url");
+		final MenuItem searchItem = menu.findItem(R.id.action_search);
+		final SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+		searchView.setSubmitButtonEnabled(true);
+		
+		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+			@Override
+			public boolean onQueryTextSubmit(String queryString) {
+				//perform search
+				search(queryString);
 				
-				mAdapter.add(url);
+				//set title
+				setTitle("Searching - " + queryString);
+				
+				//log query in history
+				Query.storeQuery(queryString);
+				
+				//collapse  search 
+				searchItem.collapseActionView();
+
+				return true;
 			}
-			mAdapter.notifyDataSetChanged();
-		} catch (JSONException e) {
-			showErrorDialog(e);
-		}
+
+			@Override
+			public boolean onQueryTextChange(String currentText) {
+				return false;
+			}
+		});
+		return true;
 	}
-	
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.action_search_history:
+			showHistory();
+			break;
+		default:
+			break;
+		}
+		return true;
+	}
+
+
 
 	public class EndlessScrollListener implements OnScrollListener {
 		// how many entries earlier to start loading next page
@@ -216,45 +249,4 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		}
 
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.image_search, menu);
-
-		final MenuItem searchItem = menu.findItem(R.id.action_search);
-		final SearchView searchView = (SearchView) menu.findItem(R.id.action_search)
-				.getActionView();
-		searchView.setSubmitButtonEnabled(true);
-		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-
-			@Override
-			public boolean onQueryTextSubmit(String queryString) {
-				storeQuery(queryString);
-				search(queryString);
-				searchItem.collapseActionView();
-				setTitle("Searching - " + queryString);
-				return true;
-			}
-
-			@Override
-			public boolean onQueryTextChange(String currentText) {
-				return false;
-			}
-		});
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.action_search_history:
-			showHistory();
-			break;
-		default:
-			break;
-		}
-		return true;
-	}
-
 }
