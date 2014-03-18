@@ -33,5 +33,10 @@ public class Query extends Model {
 	      return new Select().from(Query.class).orderBy("id DESC").limit("300").execute();
 	 }
 	 
+	 public static void storeQuery(String queryString) {
+			Query query = new Query(queryString);
+			query.save();
+	 }
+	 
 	 
 }
