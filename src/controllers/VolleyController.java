@@ -1,15 +1,13 @@
 package controllers;
 
+import android.text.TextUtils;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.Volley;
 
-import android.app.Application;
-import android.content.Context;
-import android.text.TextUtils;
-
-public class NetworkController extends com.activeandroid.app.Application {
+public class VolleyController extends com.activeandroid.app.Application {
 
     /**
      * Log or request TAG
@@ -24,7 +22,7 @@ public class NetworkController extends com.activeandroid.app.Application {
     /**
      * A singleton instance of the application class for easy access in other places
      */
-    private static NetworkController sInstance;
+    private static VolleyController sInstance;
     
     @Override
     public void onCreate() {
@@ -38,7 +36,7 @@ public class NetworkController extends com.activeandroid.app.Application {
     /**
      * @return ApplicationController singleton instance
      */
-    public static synchronized NetworkController getInstance() {
+    public static synchronized VolleyController getInstance() {
         return sInstance;
     }
     

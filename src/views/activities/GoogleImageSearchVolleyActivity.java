@@ -1,61 +1,35 @@
 package views.activities;
 
-import adapters.ImageAdapter;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.StrictMode;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnFocusChangeListener;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.*;
-import android.widget.AbsListView.OnScrollListener;
-
-import com.activeandroid.ActiveAndroid;
-import com.android.volley.Request.Method;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.Response.Listener;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.app.uber.googleimage.R;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.koushikdutta.async.future.Future;
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
-import com.squareup.picasso.Picasso;
-
-import controllers.NetworkController;
-
 import java.util.ArrayList;
-import java.util.UUID;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import models.Image;
 import models.Query;
 
-/**
- * Created by koush on 6/4/13.
- */
+import org.json.JSONObject;
+
+import adapters.ImageAdapter;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.Window;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
+import android.widget.GridView;
+import android.widget.SearchView;
+
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.app.uber.googleimage.R;
+
+import controllers.GoogleImageClient;
+
 public class GoogleImageSearchVolleyActivity extends Activity {
 	public ImageAdapter mAdapter;
-	private boolean mInError = false;
-	private Button historyButton;
 	private GridView mGridView;
 	private String mCurrentQuery;
+	private GoogleImageClient mClient;
 
 	/**
 	 * Called when the activity is first created.
@@ -74,27 +48,21 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		mAdapter = new ImageAdapter(this);
 		mGridView.setAdapter(mAdapter);
 		mGridView.setOnScrollListener(new EndlessScrollListener());
+		
+		mClient = new GoogleImageClient();
 
-		fromHistoryActivity();
-	}
-
-	private boolean fromHistoryActivity() {
-		boolean ret = false;
-		Bundle extras = null;
-		if (getIntent().getExtras() != null) {
-			ret = true;
-			extras = getIntent().getExtras();
-			String queryString = extras.getString("query");
-			Log.i("INTENT QUERY", "query string: " + queryString);
-			search(queryString);
-			setTitle("Searching - " + queryString);
-		}
-		return ret;
+		searchFromHistoryActivity();
 	}
 
 	private void search(String query) {
 		// set current search query
 		mCurrentQuery = query;
+		
+		//log query in history
+		Query.storeQuery(mCurrentQuery);
+		
+		//set title
+		setTitle("Searching - " + mCurrentQuery);
 
 		// Clear out previous search results
 		mAdapter.clear();
@@ -105,33 +73,12 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	
 	private void loadMore() {
 		setProgressBarIndeterminateVisibility(true);
-		Log.i("LOAD", "LOAD CALLED: Size: " + mAdapter.getCount());
-		JsonObjectRequest myReq = new JsonObjectRequest(
-				Method.GET,
-				String.format(
-						"https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=%s&start=%d&imgsz=medium",
-						Uri.encode(mCurrentQuery), mAdapter.getCount()), null,
-				responseSuccessListener(), responseErrorListener());
-		Log.i("REQUEST", myReq.toString());
-
-		// mQueue.add(myReq);
-		NetworkController.getInstance().addToRequestQueue(myReq);
-
+		
+		//Use GoogleImageClient to make request
+		mClient.makeSearchRequest(mCurrentQuery, mAdapter.getCount(),
+											responseSuccessListener(), responseErrorListener());
 	}
 	
-	protected void processResponse(JSONObject response) {	
-		ArrayList<Image> imageList = Image.fromJSON(response);
-		for (Image image : imageList){
-			mAdapter.add(image.url);
-		}
-		mAdapter.notifyDataSetChanged();
-}
-
-	private void showHistory() {
-		Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
-		startActivity(i);
-	}
-
 	private Response.Listener<JSONObject> responseSuccessListener() {
 
 		return new Response.Listener<JSONObject>() {
@@ -155,8 +102,41 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	}
 
 	private void showErrorDialog(Exception e) {
-		mInError = true;
 		e.printStackTrace();
+	}
+	
+	protected void processResponse(JSONObject response) {	
+		ArrayList<Image> imageList = Image.fromJSON(response);
+		for (Image image : imageList){
+			mAdapter.add(image.url);
+		}
+		mAdapter.notifyDataSetChanged();
+	}
+	
+	private boolean searchFromHistoryActivity() {
+		boolean ret = false;
+		Bundle extras = null;
+		if (getIntent().getExtras() != null) {
+			ret = true;
+			extras = getIntent().getExtras();
+			
+			String queryString = extras.getString("query");
+			search(queryString);
+		}
+		return ret;
+	}
+	
+	private void showHistory() {
+		Intent i = new Intent(getApplicationContext(), QueryHistoryActivity.class);
+		startActivity(i);
+	}
+
+	public ImageAdapter getCurrentAdapater(){
+		ImageAdapter ret = null;
+		if (mAdapter!= null){
+			ret = mAdapter;
+		}
+		return ret;
 	}
 
 	@Override
@@ -174,12 +154,6 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 			public boolean onQueryTextSubmit(String queryString) {
 				//perform search
 				search(queryString);
-				
-				//set title
-				setTitle("Searching - " + queryString);
-				
-				//log query in history
-				Query.storeQuery(queryString);
 				
 				//collapse  search 
 				searchItem.collapseActionView();
@@ -206,9 +180,7 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		}
 		return true;
 	}
-
-
-
+	
 	public class EndlessScrollListener implements OnScrollListener {
 		// how many entries earlier to start loading next page
 		private int visibleThreshold = 4;
@@ -230,7 +202,6 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 				int visibleItemCount, int totalItemCount) {
 			if (loading) {
 				if (totalItemCount > previousTotal) {
-					Log.i("LOADING", "NOT LOADING");
 					loading = false;
 					previousTotal = totalItemCount;
 					currentPage++;
@@ -238,7 +209,6 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 			}
 			//if we are not loading and the (total - visible in view) <=  (current top item position + the threshold value)
 			if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
-				Log.i("LOADING MORE", "LOADING MORE");
 				loadMore();
 				loading = true;
 			}

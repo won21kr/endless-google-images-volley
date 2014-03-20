@@ -1,4 +1,4 @@
-package views.activities;
+package helpers;
 
 import android.content.Context;
 import android.util.AttributeSet;
