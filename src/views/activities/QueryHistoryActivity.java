@@ -3,9 +3,6 @@ package views.activities;
 import java.util.List;
 
 import models.Query;
-
-import com.app.uber.googleimage.R;
-
 import adapters.QueryAdapter;
 import android.app.Activity;
 import android.content.Intent;
@@ -15,6 +12,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+
+import com.app.uber.googleimage.R;
 
 public class QueryHistoryActivity extends Activity {
 	private ListView mLVQueries;
