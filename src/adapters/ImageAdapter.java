@@ -1,7 +1,5 @@
 package adapters;
 
-import java.util.ArrayList;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +11,6 @@ import com.app.uber.googleimage.R;
 import com.squareup.picasso.Picasso;
 
  public class ImageAdapter extends ArrayAdapter<String> {
-        private ArrayList<String> mData;
 
 		public ImageAdapter(Context context) {
             super(context, 0);

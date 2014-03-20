@@ -11,13 +11,11 @@ import adapters.ImageAdapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
-import android.widget.Button;
 import android.widget.GridView;
 import android.widget.SearchView;
 
@@ -121,10 +119,9 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		if (getIntent().getExtras() != null) {
 			ret = true;
 			extras = getIntent().getExtras();
+			
 			String queryString = extras.getString("query");
-			Log.i("INTENT QUERY", "query string: " + queryString);
 			search(queryString);
-			setTitle("Searching - " + queryString);
 		}
 		return ret;
 	}
@@ -205,7 +202,6 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 				int visibleItemCount, int totalItemCount) {
 			if (loading) {
 				if (totalItemCount > previousTotal) {
-					Log.i("LOADING", "NOT LOADING");
 					loading = false;
 					previousTotal = totalItemCount;
 					currentPage++;
@@ -213,7 +209,6 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 			}
 			//if we are not loading and the (total - visible in view) <=  (current top item position + the threshold value)
 			if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
-				Log.i("LOADING MORE", "LOADING MORE");
 				loadMore();
 				loading = true;
 			}

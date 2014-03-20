@@ -27,7 +27,7 @@ public class GoogleImageClient {
 				responseSuccessListener, responseErrorListener);
 				
 		
-		NetworkController.getInstance().addToRequestQueue(request);		
+		VolleyController.getInstance().addToRequestQueue(request);		
 	}
 	
 	
