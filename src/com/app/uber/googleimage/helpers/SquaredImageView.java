@@ -1,4 +1,4 @@
-package helpers;
+package com.app.uber.googleimage.helpers;
 
 import android.content.Context;
 import android.util.AttributeSet;

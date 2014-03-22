@@ -1,4 +1,4 @@
-package models;
+package com.app.uber.googleimage.models;
 
 import java.util.ArrayList;
 
