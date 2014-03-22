@@ -1,4 +1,4 @@
-package controllers;
+package com.app.uber.googleimage.controllers;
 
 import org.json.JSONObject;
 

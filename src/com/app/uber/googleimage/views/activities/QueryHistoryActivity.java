@@ -1,9 +1,9 @@
-package views.activities;
+package com.app.uber.googleimage.views.activities;
 
 import java.util.List;
 
-import models.Query;
-import adapters.QueryAdapter;
+import com.app.uber.googleimage.models.Query;
+import com.app.uber.googleimage.adapters.QueryAdapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

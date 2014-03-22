@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
     
-     <helpers.SquaredImageView
+     <com.app.uber.googleimage.helpers.SquaredImageView
         android:id="@+id/image"
         android:scaleType="fitCenter"
         android:layout_width="match_parent"

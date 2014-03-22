@@ -1,16 +1,18 @@
-package views.activities;
+package com.app.uber.googleimage.views.activities;
 
 import java.util.ArrayList;
 
-import models.Image;
-import models.Query;
+import com.app.uber.googleimage.models.Image;
+import com.app.uber.googleimage.models.Query;
 
 import org.json.JSONObject;
 
-import adapters.ImageAdapter;
+import com.app.uber.googleimage.adapters.ImageAdapter;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
@@ -22,14 +24,14 @@ import android.widget.SearchView;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.app.uber.googleimage.R;
-
-import controllers.GoogleImageClient;
+import com.app.uber.googleimage.controllers.GoogleImageClient;
 
 public class GoogleImageSearchVolleyActivity extends Activity {
 	public ImageAdapter mAdapter;
 	private GridView mGridView;
 	private String mCurrentQuery;
 	private GoogleImageClient mClient;
+	private EndlessScrollListener mEndlessListener;
 
 	/**
 	 * Called when the activity is first created.
@@ -47,7 +49,9 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		// set reference to adapter
 		mAdapter = new ImageAdapter(this);
 		mGridView.setAdapter(mAdapter);
-		mGridView.setOnScrollListener(new EndlessScrollListener());
+		
+		mEndlessListener = new EndlessScrollListener();
+		mGridView.setOnScrollListener(mEndlessListener);
 		
 		mClient = new GoogleImageClient();
 
@@ -55,6 +59,9 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	}
 
 	private void search(String query) {
+		//reset totals in scroll listener 
+		mEndlessListener.resetTotals();
+		
 		// set current search query
 		mCurrentQuery = query;
 		
@@ -79,10 +86,9 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 											responseSuccessListener(), responseErrorListener());
 	}
 	
-	private Response.Listener<JSONObject> responseSuccessListener() {
-
+	
+	private Response.Listener<JSONObject> responseSuccessListener() {	
 		return new Response.Listener<JSONObject>() {
-
 			@Override
 			public void onResponse(JSONObject response) {
 				processResponse(response);
@@ -182,7 +188,6 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	}
 	
 	public class EndlessScrollListener implements OnScrollListener {
-		// how many entries earlier to start loading next page
 		private int visibleThreshold = 4;
 		private int currentPage = 0;
 		private int previousTotal = 0;
@@ -190,6 +195,10 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 
 		public EndlessScrollListener() {
 			
+		}
+		
+		public void resetTotals(){
+			previousTotal = 0;
 		}
 		
 		@Override

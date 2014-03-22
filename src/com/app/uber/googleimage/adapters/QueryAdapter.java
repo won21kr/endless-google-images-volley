@@ -1,6 +1,5 @@
-package adapters;
+package com.app.uber.googleimage.adapters;
 
-import models.Query;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.app.uber.googleimage.R;
+import com.app.uber.googleimage.models.Query;
 
  public class QueryAdapter extends ArrayAdapter<Query> {
         public QueryAdapter(Context context) {
