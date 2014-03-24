@@ -59,8 +59,11 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	}
 
 	private void search(String query) {
-		//reset totals in scroll listener 
-		mEndlessListener.resetTotals();
+		//reset state of scroll listener 
+		mEndlessListener.resetListener();
+		
+		// Clear out previous search results
+		mAdapter.clear();
 		
 		// set current search query
 		mCurrentQuery = query;
@@ -70,10 +73,7 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		
 		//set title
 		setTitle("Searching - " + mCurrentQuery);
-
-		// Clear out previous search results
-		mAdapter.clear();
-
+	
 		// load images
 		loadMore();
 	}
@@ -197,8 +197,9 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 			
 		}
 		
-		public void resetTotals(){
+		public void resetListener(){
 			previousTotal = 0;
+			loading = true;
 		}
 		
 		@Override
