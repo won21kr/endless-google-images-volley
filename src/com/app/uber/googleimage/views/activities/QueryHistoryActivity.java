@@ -18,6 +18,7 @@ import com.app.uber.googleimage.R;
 public class QueryHistoryActivity extends Activity {
 	private ListView mLVQueries;
 	private QueryAdapter mQueryAdapter;
+	private List<Query> mQueryList;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +30,12 @@ public class QueryHistoryActivity extends Activity {
 		mLVQueries = (ListView) findViewById(R.id.lv_query_list_view);
 		mQueryAdapter = new QueryAdapter(getApplicationContext());
 		mLVQueries.setAdapter(mQueryAdapter);
+	
+	}
+	
+	@Override
+	protected void onStart(){
+		super.onStart();
 		
 		fetchQueryList();
 		setupQueryItemListenter();
@@ -43,19 +50,18 @@ public class QueryHistoryActivity extends Activity {
 					long id) {
 				Intent i = new Intent(getApplicationContext(), GoogleImageSearchVolleyActivity.class);
 				Bundle b = new Bundle();
-				b.putString("query", Query.recentItems().get(position).getQuery());
+				b.putString("query", mQueryList.get(position).getQuery());
 				i.putExtras(b);
-				startActivity(i);
 				
+				startActivity(i);	
 			}
 		});
-		
 	}
 
 
 	private void fetchQueryList() {
-		List<Query> queryList = Query.recentItems();
-		for (Query q : queryList){
+		mQueryList = Query.recentItems();
+		for (Query q : mQueryList){
 			mQueryAdapter.add(q);
 		}
 		
@@ -67,7 +73,7 @@ public class QueryHistoryActivity extends Activity {
         if (theId == android.R.id.home) {
             finish();
         }
-        return true;
+        return false;
     }
 	
 }

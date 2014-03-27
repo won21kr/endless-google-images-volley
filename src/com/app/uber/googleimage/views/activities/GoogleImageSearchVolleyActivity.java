@@ -1,6 +1,8 @@
 package com.app.uber.googleimage.views.activities;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.app.uber.googleimage.models.Image;
 import com.app.uber.googleimage.models.Query;
@@ -12,6 +14,7 @@ import com.app.uber.googleimage.adapters.ImageAdapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,6 +35,8 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	private String mCurrentQuery;
 	private GoogleImageClient mClient;
 	private EndlessScrollListener mEndlessListener;
+	private ArrayList<Image> mImageList;
+	private static String IMAGE_LIST_TAG = "image-list";
 
 	/**
 	 * Called when the activity is first created.
@@ -112,10 +117,8 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 	}
 	
 	protected void processResponse(JSONObject response) {	
-		ArrayList<Image> imageList = Image.fromJSON(response);
-		for (Image image : imageList){
-			mAdapter.add(image.url);
-		}
+		mImageList = Image.fromJSON(response);
+		mAdapter.addAll(mImageList);
 		mAdapter.notifyDataSetChanged();
 	}
 	
@@ -227,6 +230,27 @@ public class GoogleImageSearchVolleyActivity extends Activity {
 		public int getCurrentPage() {
 			return currentPage;
 		}
-
 	}
+	
+	@Override
+	public void onResume(){
+		super.onResume();
+		if (mImageList != null){
+			mAdapter.addAll(mImageList);
+		}
+	}
+	 @Override
+	 public void onSaveInstanceState(Bundle savedInstanceState) {
+		 // Save custom values into the bundle
+		 savedInstanceState.putSerializable(IMAGE_LIST_TAG, mImageList);
+	  	 // Always call the superclass so it can save the view hierarchy state
+	  	 super.onSaveInstanceState(savedInstanceState);
+	  }
+	 
+	 public void onRestoreInstanceState(Bundle savedInstanceState) {
+		    // Always call the superclass so it can restore the view hierarchy
+		    super.onRestoreInstanceState(savedInstanceState);
+		    // Restore state members from saved instance
+		    mImageList = (ArrayList<Image>) savedInstanceState.getSerializable(IMAGE_LIST_TAG);
+		}
 }
