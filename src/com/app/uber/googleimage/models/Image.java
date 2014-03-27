@@ -1,5 +1,6 @@
 package com.app.uber.googleimage.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
@@ -11,7 +12,7 @@ import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
 
 @Table(name = "Images")
-public class Image extends Model{
+public class Image extends Model implements Serializable{
 	@Column(name = "Url")
 	public String url;
 	

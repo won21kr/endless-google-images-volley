@@ -8,9 +8,10 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
 import com.app.uber.googleimage.R;
+import com.app.uber.googleimage.models.Image;
 import com.squareup.picasso.Picasso;
 
- public class ImageAdapter extends ArrayAdapter<String> {
+ public class ImageAdapter extends ArrayAdapter<Image> {
 
 		public ImageAdapter(Context context) {
             super(context, 0);
@@ -27,7 +28,7 @@ import com.squareup.picasso.Picasso;
             final ImageView iv = (ImageView) convertView.findViewById(R.id.image);
 
             Picasso.with(getContext())
-            .load(getItem(position))
+            .load(getItem(position).url)
             .centerCrop()
             .resize(256,  256)
             .placeholder(R.drawable.placeholder)
